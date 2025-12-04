@@ -1,0 +1,105 @@
+from fastapi import APIRouter, UploadFile, File
+import fitz
+import base64
+import logging
+import os
+from dotenv import load_dotenv
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain_openai.embeddings import OpenAIEmbeddings
+
+from app.service.pdf_service import PdfService
+from app.service.chunk.chunking_service import ChunkingService
+# from app.service.chunk.chunking_service import ChunkingService
+load_dotenv()
+logger = logging.getLogger(__name__)
+
+router = APIRouter()  
+@router.post("/parse-detail")
+async def parse_pdf_detail(file: UploadFile = File(...)):
+    pdf_bytes = await file.read()
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+    result = []
+
+    for page_num, page in enumerate(doc):
+        text = page.get_text("text")
+        imgs = []
+
+        for img in page.get_images(full=True):
+            xref = img[0]
+            pix = fitz.Pixmap(doc, xref)
+            img_bytes = pix.tobytes("png")
+
+            # base64 인코딩
+            encoded = base64.b64encode(img_bytes).decode("utf-8")
+
+            imgs.append({
+                "xref": xref,
+                # "image_base64": encoded
+            })
+
+        result.append({
+            "page": page_num + 1,
+            "text": text,
+            "images": imgs
+        })
+
+    return result
+
+@router.post("/chunk")
+def chunk_test():
+        text_splitter = SemanticChunker(OpenAIEmbeddings())
+        chunks = text_splitter.split_text("Hello, world!")
+
+        return chunks
+# -----------------------------
+# PDF 업로드 → 텍스트 → 청킹
+# -----------------------------
+@router.post("/parse-and-chunk")
+async def parse_and_chunk(file: UploadFile = File(...)):
+    # 1) PDF 읽기
+    pdf_bytes = await file.read()
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+    # 2) 전체 페이지 텍스트 합치기
+    full_text = ""
+    for page in doc:
+        text = page.get_text("text")
+        full_text += text + "\n"
+
+    # 3) OpenAI Embedding 준비
+    # embedder = OpenAIEmbeddings()
+    # 4) Semantic Chunker 준비
+    # text_splitter = SemanticChunker(OpenAIEmbeddings())
+
+    # 5) 청킹 수행
+    text_splitter = SemanticChunker(
+        embeddings=OpenAIEmbeddings(),
+        breakpoint_threshold_type="percentile",  # 또는 "cosine"
+        breakpoint_threshold_amount=65          # ← 민감도 (값 낮출수록 더 많이 쪼개짐)
+    )
+
+    chunks = text_splitter.split_text(full_text)
+
+    # 6) 결과 반환
+    return {
+        "page_count": len(doc),
+        "chunk_count": len(chunks),
+        "chunks": chunks
+    }
+
+@router.post("/parse-and-chunk-with-service")
+async def parse_and_chunk_with_service(file: UploadFile = File(...)):
+    pdf_service = PdfService()
+    pdf_bytes = await file.read()
+    result = pdf_service.parse_pdf(pdf_bytes)
+
+    chunking_service = ChunkingService()
+    chunks = chunking_service.split_text_with_metadata(result)
+    
+    # logger.info(f"Parsed full text: {result}")
+
+
+    # split_service = ChunkingService()
+    # chunks = split_service.split_text(result)
+    return result
