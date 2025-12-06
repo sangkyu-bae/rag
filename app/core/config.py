@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = Field(default="gpt-4o-mini", description="OpenAI 모델명")
 
     model_config = {                                  # ✅ Pydantic v2 문법
-        "env_file": ".env",
+        "env_file": ".env", 
         "env_file_encoding": "utf-8",
     }
 
