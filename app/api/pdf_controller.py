@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Request
+from fastapi import APIRouter, UploadFile, File, Request, HTTPException
 import fitz
 import base64
 import logging
@@ -11,6 +11,7 @@ from app.service.pdf_service import PdfService
 from app.service.chunk.chunking_service import ChunkingService
 from app.service.chunk.nlp.nlp_service import NLPService
 # from app.service.chunk.chunking_service import ChunkingService
+from app.service.llm_parse_service import LlamaParseService
 load_dotenv()
 logger = logging.getLogger(__name__)
 
@@ -110,3 +111,24 @@ def nlp_test(text: str, request: Request):
     nlp_service = NLPService()
     tokens = nlp_service.test(request,text)
     return tokens
+
+@router.post("/parse/pdf")
+async def parse_pdf(file: UploadFile = File(...)):
+    # 파일 확장자 체크
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="PDF 파일만 업로드 가능합니다.")
+
+    # 업로드된 파일 bytes 읽기
+    file_bytes = await file.read()
+    llama_parse_service = LlamaParseService()
+    # 파싱 실행
+    try:
+        result = llama_parse_service.parse_bytes(file_bytes, file.filename)
+        # return {
+        #     "file_name": file.filename,
+        #     "pages": result["pages"],
+        #     "content": result["content"],
+        # }
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Parsing failed: {str(e)}")
