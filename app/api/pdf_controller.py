@@ -2,7 +2,6 @@ from fastapi import APIRouter, UploadFile, File, Request, HTTPException
 import fitz
 import base64
 import logging
-import os
 from dotenv import load_dotenv
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
@@ -10,8 +9,8 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 from app.service.pdf_service import PdfService
 from app.service.chunk.chunking_service import ChunkingService
 from app.service.chunk.nlp.nlp_service import NLPService
-# from app.service.chunk.chunking_service import ChunkingService
-from app.service.llm_parse_service import LlamaParseService
+# from app.services.chunk.chunking_service import ChunkingService
+from app.domain.document.services.llm_parse_service import LlamaParseService
 load_dotenv()
 logger = logging.getLogger(__name__)
 

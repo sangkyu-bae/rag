@@ -1,14 +1,13 @@
 """LLM을 사용한 문서 카테고리 라우팅 서비스."""
 
-import asyncio
 import logging
-from typing import Optional, Dict, Any, Literal, Tuple
+from typing import Optional, Dict, Any, Tuple
 from pathlib import Path
 from enum import Enum
 
 from openai import AsyncOpenAI
 from app.core.config import settings
-from app.service.llm_parse_service import LlamaParseService, get_llama_parse_service
+from app.domain.document.services.llm_parse_service import LlamaParseService, get_llama_parse_service
 
 logger = logging.getLogger(__name__)
 

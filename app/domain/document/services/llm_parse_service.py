@@ -9,10 +9,13 @@ from llama_parse import LlamaParse
 from app.core.config import settings
 import tempfile
 import os
+
+from app.domain.document.entity.documentinfo import DocumentInfo
+
 logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
-
+from app.domain.document.entity.doc import Doc
 load_dotenv() 
 class LlamaParseService:
     """LlamaParse API를 사용한 문서 파싱 서비스."""
@@ -181,7 +184,7 @@ class LlamaParseService:
                 if os.path.exists(tmp_file_path):
                     os.unlink(tmp_file_path)
 
-    def parse_bytes(self, file_bytes: bytes, file_name: str):
+    def parse_bytes(self, file_bytes: bytes, file_name: str) -> DocumentInfo:
     
         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_name.split('.')[-1]}") as tmp:
             tmp.write(file_bytes)
@@ -202,11 +205,10 @@ class LlamaParseService:
 
             logger.info(f"파싱 완료: {tmp_path}, 페이지 수: {len(documents)}")
 
-            return {
-                "content": parsed_content,
-                "metadata": metadata,
-                "documents": [{"text": doc.text, "metadata": doc.metadata} for doc in documents],
-            }
+            doc_list : Doc =  [Doc.from_document(doc) for doc in documents]
+            doc_info : DocumentInfo= DocumentInfo.from_doc_info(parsed_content,metadata,doc_list)
+
+            return doc_info
         finally:
             os.remove(tmp_path)
 
