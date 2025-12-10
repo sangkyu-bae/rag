@@ -205,7 +205,7 @@ class LlamaParseService:
 
             logger.info(f"파싱 완료: {tmp_path}, 페이지 수: {len(documents)}")
 
-            doc_list : Doc =  [Doc.from_document(doc) for doc in documents]
+            doc_list : list[Doc] =  [Doc.from_document(doc) for doc in documents]
             doc_info : DocumentInfo= DocumentInfo.from_doc_info(parsed_content,metadata,doc_list)
 
             return doc_info

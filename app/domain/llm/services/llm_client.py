@@ -73,7 +73,8 @@ class LlmClient:
             max_tokens=max_tokens,
         )
 
-        result = response.choices[0].message["content"]
+        # result = response.choices[0].message["content"]
+        result = response.choices[0].message.content
         return result
 
     # --------------------------

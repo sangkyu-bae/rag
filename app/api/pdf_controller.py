@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
 
+from app.application.service.parse_document_service import ParseDocumentService
+from app.service.chunk.parser.text_parseprocessor import TextParseProcessor
 from app.service.pdf_service import PdfService
 from app.service.chunk.chunking_service import ChunkingService
 from app.service.chunk.nlp.nlp_service import NLPService
@@ -131,3 +133,12 @@ async def parse_pdf(file: UploadFile = File(...)):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Parsing failed: {str(e)}")
+
+@router.post("/test/pd")
+async def test_pdf(file:UploadFile = File(...)):
+    file_bytes = await file.read()
+    svc = ParseDocumentService()
+
+    return svc.execute(file_bytes,file.filename)
+    # return  text_parser.preprocess_text('# 크크크앱 개발자 매뉴얼\n\n\n\n\n# 1. 안드로이드앱 빌드 및 스토어 등록')
+

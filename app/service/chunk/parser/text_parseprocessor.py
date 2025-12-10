@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 class TextParseProcessor:
     def __init__(self):
         pass
-        # 1) 유니코드 정규화 (한글/기호 깨짐 방지)
+    # 1) 유니코드 정규화 (한글/기호 깨짐 방지)
+    @staticmethod
     def normalize_unicode(text: str, form: str = "NFKC") -> str:
         """
         유니코드 정규화.
@@ -18,6 +19,7 @@ class TextParseProcessor:
 
 
     # 2) 공백/줄바꿈 정리
+    @staticmethod
     def normalize_whitespace(text: str) -> str:
         """
         - 탭을 공백으로
@@ -42,6 +44,7 @@ class TextParseProcessor:
 
 
     # 3) 특수문자/따옴표/대시 통일
+    @staticmethod
     def normalize_punctuation(text: str) -> str:
         """
         - 다양한 따옴표를 " 로 통일
@@ -61,6 +64,7 @@ class TextParseProcessor:
 
 
     # 4) 줄바꿈+하이픈으로 쪼개진 단어 붙이기
+    @staticmethod
     def fix_hyphenated_linebreaks(text: str) -> str:
         """
         금-
@@ -72,6 +76,7 @@ class TextParseProcessor:
 
 
     # 5) 한 문장인데 줄바꿈으로 쪼개진 경우 합치기
+    @staticmethod
     def merge_broken_lines(text: str) -> str:
         """
         - 라인 끝이 문장부호(.,?!… 등)로 끝나지 않으면 다음 줄과 합침
@@ -108,11 +113,12 @@ class TextParseProcessor:
     
         # 12) 전체 파이프라인
     def preprocess_text(
+        self,
         text: str,
         header_patterns: Optional[Iterable[str]] = None,
         footer_patterns: Optional[Iterable[str]] = None,
         boilerplate_phrases: Optional[Iterable[str]] = None,
-        do_sentence_split: bool = False,
+        do_sentence_split: bool = False, 
     ) -> str | List[str]:
         """
         LlamaParse 결과(heading+content 등)를 받아서

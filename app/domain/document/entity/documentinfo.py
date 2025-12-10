@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.domain.document.entity.doc import Doc
+from app.domain.llm.prompt.prompt_registry import PromptRegistry
 
 
 @dataclass
@@ -41,3 +42,16 @@ class DocumentInfo:
         mid_index = total // 2
         selected = paragraphs[:3] + [paragraphs[mid_index]]
         return "\n\n".join(p.content for p in selected)
+
+    def get_first_route_llm(self) -> str:
+        # 1) 분류 프롬프트 body
+        prompt_body: str = PromptRegistry._first_document_classification_prompt()
+
+        # 2) 문서에서 추출된 샘플 문단
+        sample_text: str = self.get_route_doc()
+
+        # 3) 두 개 합쳐서 최종 프롬프트 생성
+        final_prompt = f"{prompt_body}\n\n{sample_text}"
+
+        return final_prompt
+
