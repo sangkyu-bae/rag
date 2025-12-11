@@ -192,8 +192,7 @@ class LlamaParseService:
 
         try:
             documents = self.parser.load_data(tmp_path)
-                # 결과 처리
-
+            # 결과 처리
             parsed_content = "\n\n".join([doc.text for doc in documents])
             metadata = {
                 # "file_path": str(tmp_path),

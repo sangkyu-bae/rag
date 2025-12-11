@@ -4,6 +4,11 @@ import logging
 import json
 import re
 
+from sqlalchemy.testing.suite.test_reflection import metadata
+
+from app.domain.document.entity.doc import Doc
+from app.domain.document.entity.documentinfo import DocumentInfo
+
 logger = logging.getLogger(__name__)
 
 class PdfService:
@@ -55,7 +60,6 @@ class PdfService:
     def parse_pdf(self, pdf_bytes: bytes, filetype: str = "pdf") -> list[dict]:
         doc = fitz.open(stream=pdf_bytes, filetype=filetype)
         result = []
-
         for page_num, page in enumerate(doc):
             # 섹션 감지
             sections = self.split_sections_layout(page)
@@ -105,6 +109,53 @@ class PdfService:
             text = page.get_text("text")
             full_text += text + "\n"
         return full_text
+
+    def normal_parse(self,pdf_bytes, filetype:str ="pdf") -> DocumentInfo:
+        doc = fitz.open(stream=pdf_bytes, filetype=filetype)
+
+        result = []
+        doc_list: list[Doc] =[]
+        content:str = ""
+        for page_num, page in enumerate(doc):
+            text = page.get_text("text")
+            imgs = []
+
+            for img in page.get_images(full=True):
+                xref = img[0]
+                pix = fitz.Pixmap(doc, xref)
+                img_bytes = pix.tobytes("png")
+
+                # base64 인코딩
+                encoded = base64.b64encode(img_bytes).decode("utf-8")
+
+                imgs.append({
+                    "xref": xref,
+                    # "image_base64": encoded
+                })
+
+            result.append({
+                "page": page_num + 1,
+                "text": text,
+                "images": imgs
+            })
+            content += text + "\n"
+
+            metadata = {
+                "page": page_num + 1,
+                "rotation": page.rotation,
+                "rect": list(page.rect),  # 페이지 크기
+            }
+            doc_info: Doc = Doc.from_document_pdf(text,metadata)
+            doc_list.append(doc_info)
+
+        meta:dict =  {
+            "pages_count" : len(doc)
+        }
+        doc_info : DocumentInfo = DocumentInfo.from_doc_info(content,meta,doc_list)
+
+        return doc_info
+
+
 
     # def parse_pdf(self, pdf_bytes: bytes, filetype: str = "pdf") -> list[dict]:
     #     doc = fitz.open(stream=pdf_bytes, filetype=filetype)
