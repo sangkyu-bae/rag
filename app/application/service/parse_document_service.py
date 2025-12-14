@@ -25,8 +25,6 @@ class ParseDocumentService:
         llm_client = LlmClient()
         doc = pdf_service.normal_parse(file_bytes, filename)
         logger.info(doc)
-        route_chunk_request: str = doc.get_first_route_llm()
-
         route_response: str = llm_client.ask(PromptRegistry._first_document_classification_prompt(),
                                              doc.get_route_doc())
         data = json.loads(route_response)
@@ -34,17 +32,36 @@ class ParseDocumentService:
         classification = DocumentClassification(**data)
 
         docments: list[Doc] = doc.documents
-        result :list[str] = []
+        embedding: OpenAIEmbed = OpenAIEmbed()
+        # result :list[str] = []
+        result :list[Doc] =[]
+        vectors = []
         if classification.document_type == 'policy':
+            llama_parse_service = LlamaParseService()
+            doc_info: DocumentInfo = llama_parse_service.parse_bytes(file_bytes, filename)
+            embedding_result = embedding.embed([doc_result.content for doc_result in doc_info.documents])
+            result = doc_info.documents
             logger.info("tt -> %s", classification.document_type)
+            for i, (d, emb) in enumerate(zip(result, embedding_result)):
+                vectors.append({
+                    "id": i,
+                    "vector": emb,
+                    "payload": {
+                        "content": d.content,
+                        **d.metadata,
+                    }
+                })
+            qdrant_repository = QdrantRepository()
+            qdrant_repository.upsert("policy", vectors)
+            # result = doc_info.documents
 
         if classification.document_type == 'manual':
             chunk_svc = ChunkService()
-            result :list[Doc]= chunk_svc.full_chunk(doc)
+            # result :list[Doc]= chunk_svc.full_chunk(doc)
+            result = chunk_svc.full_chunk(doc)
             logger.info(result)
-            embedding :OpenAIEmbed= OpenAIEmbed()
             embedding_result = embedding.embed([doc.content for doc in result])
-            vectors = []
+
             for i, (d, emb) in enumerate(zip(result, embedding_result)):
                 vectors.append({
                     "id": i,

@@ -18,8 +18,8 @@ class Doc:
     def from_document(cls,document:Document)->Doc:
         text_parser = TextParseProcessor()
         # parse_content = text_parser.preprocess_text(document.text)
-        # parse_content = text_parser.preprocess_text(document.text)
-        return cls(content=document.text,metadata=document.metadata)
+        parse_content = text_parser.preprocess_text(document.text)
+        return cls(content=parse_content,metadata=document.metadata)
 
     @classmethod
     def from_document_pdf(cls,content:str,metadata:dict)->Doc:
