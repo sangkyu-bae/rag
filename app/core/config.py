@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     """Application configuration loaded from environment variables."""
 
     PROJECT_NAME: str = Field(default="FastAPI Boilerplate")
-    VERSION: str = Field(default="0.1.0")             # ✅ 따옴표 닫힘 확인!
+    VERSION: str = Field(default="0.1.0")
     API_V1_STR: str = Field(default="/api/v1")
     BACKEND_CORS_ORIGINS: List[str] = Field(default_factory=lambda: ["*"])
     
@@ -20,8 +20,12 @@ class Settings(BaseSettings):
     # OpenAI 설정
     OPENAI_API_KEY: str = Field(default="", description="OpenAI API 키")
     OPENAI_MODEL: str = Field(default="gpt-4o-mini", description="OpenAI 모델명")
+    LANGSMITH_TRACING: bool = Field(default="")
+    LANGCHAIN_ENDPOINT: str = Field(default="")
+    LANGCHAIN_API_KEY: str = Field(default="")
+    LANGCHAIN_PROJECT: str = Field(default="")
 
-    model_config = {                                  # ✅ Pydantic v2 문법
+    model_config = {
         "env_file": ".env", 
         "env_file_encoding": "utf-8",
     }
