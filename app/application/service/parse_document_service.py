@@ -75,6 +75,8 @@ import logging
 from langchain_core.runnables import RunnableLambda
 
 from app.infrastructure.langchain.langsmith import langsmith
+from app.infrastructure.langchain.upsert import Upsert
+from app.infrastructure.qdrant.qdrant_langchain_repository import QdrantLangchainRepository
 from app.service.pdf_service import PdfService
 from app.domain.llm.services.llm_client import LlmClient
 from app.domain.llm.prompt.prompt_registry import PromptRegistry
@@ -169,41 +171,62 @@ class ParseDocumentService:
 
         router = RunnableLambda(router_fn)
 
-        embed = RunnableLambda(
-            lambda x: {
+        upsert = RunnableLambda(
+            lambda x:{
                 **x,
-                "vectors": [
-                    {
-                        "id": i,
-                        "vector": emb,
-                        "payload": {
-                            "content": d.content,
-                            **d.metadata,
-                        }
-                    }
-                    for i, (d, emb) in enumerate(
-                        zip(
-                            x["result"].documents,
-                            OpenAIEmbed().embed(
-                                [doc.content for doc in x["result"].documents]
-                            )
-                        )
-                    )
-                ]
+                "upsert_document": Upsert(OpenAIEmbed,QdrantLangchainRepository)
+                                        .upsert(
+                                                x["result"].get_upsert_document(),
+                                                x["classification"].document_type,
+                                        )
             }
         )
 
-        store = RunnableLambda(
-            lambda x: QdrantRepository().upsert(
-                x["classification"].document_type,
-                x["vectors"]
-            )
+        return (
+                parse_pdf
+                | classify
+                | router
+                | upsert
         )
 
-        return (
-            parse_pdf
-            | classify
-            | router
-            | embed
-            | store
-        )
+
+        # embed = RunnableLambda(
+        #     lambda x: {
+        #         **x,
+        #         "vectors": [
+        #             {
+        #                 "id": i,
+        #                 "vector": emb,
+        #                 "payload": {
+        #                     "content": d.content,
+        #                     **d.metadata,
+        #                 }
+        #             }
+        #             for i, (d, emb) in enumerate(
+        #                 zip(
+        #                     x["result"].documents,
+        #                     OpenAIEmbed().embed(
+        #                         [doc.content for doc in x["result"].documents]
+        #                     )
+        #                 )
+        #             )
+        #         ]
+        #     }
+        # )
+        #
+        # store = RunnableLambda(
+        #     lambda x: QdrantRepository().upsert(
+        #         x["classification"].document_type,
+        #         x["vectors"]
+        #     )
+        # )
+
+
+        # return (
+        #     parse_pdf
+        #     | classify
+        #     | router
+        #     | upsert
+        #     # | embed
+        #     # | store
+        # )

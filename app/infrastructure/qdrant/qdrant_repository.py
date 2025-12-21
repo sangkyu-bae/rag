@@ -4,8 +4,6 @@ from qdrant_client.models import (
     VectorParams,
     PointStruct
 )
-
-from app.domain.document.entity.doc import Doc
 from app.infrastructure.qdrant.qdrant_client_factory import QdrantClientFactory
 
 

@@ -1,10 +1,14 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from importlib.metadata import metadata
 from typing import Any
 
-from app.domain.document.entity.doc import Doc
-from app.domain.llm.prompt.prompt_registry import PromptRegistry
+from pymupdf.extra import make_table_dict
 
+from app.domain.document.entity.doc import Doc
+from app.domain.document.entity.document_type import DocumentType
+from app.domain.llm.prompt.prompt_registry import PromptRegistry
+from langchain_core.documents import Document
 
 @dataclass
 class DocumentInfo:
@@ -55,3 +59,19 @@ class DocumentInfo:
 
         return final_prompt
 
+
+    def get_upsert_document(self)-> list[Document]:
+         docs:list[Document] = [
+             Document(
+                 page_content = doc.content,
+                 matadata = doc.metadata
+             )
+             for doc in self.document
+         ]
+
+         docs.append(Document(
+             page_content=self.content,
+             metadata=self.metadata
+         ))
+
+         return docs
