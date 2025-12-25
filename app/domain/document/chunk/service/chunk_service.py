@@ -25,10 +25,14 @@ class ChunkService:
             separators=["\n\n", "\n", ".", " ", ""],
         )
 
-        splitter_text = splitter.split_text(doc.content)
-
-        doc_list: list[Doc] = [Doc.from_document_pdf(text, doc.metadata) for text in splitter_text]
-
-        return DocumentInfo.from_doc_info(doc.content,doc.metadata,doc_list)
+        chunks = splitter.split_documents(doc.get_upsert_document())
+        doc_list = []
+        for idx, chunk in enumerate(chunks):
+            chunk.metadata["chunk_index"] = idx
+            chunk.metadata["role"] = "child"
+            doc_list.append(
+                Doc.from_document_pdf(chunk.page_content, chunk.metadata)
+            )
+        return doc
 
 

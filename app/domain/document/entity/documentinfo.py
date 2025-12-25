@@ -15,6 +15,7 @@ class DocumentInfo:
     content:str
     metadata:dict[str, Any]
     documents:list[Doc]
+    child_documents:list[Doc]
 
     @classmethod
     def from_doc_info(cls, content:str, metadata:dict[str,Any],documents:list[Doc]) -> DocumentInfo:
@@ -69,9 +70,13 @@ class DocumentInfo:
              for doc in self.document
          ]
 
-         docs.append(Document(
-             page_content=self.content,
-             metadata=self.metadata
-         ))
+         # docs.append(Document(
+         #     page_content=self.content,
+         #     metadata=self.metadata
+         # ))
 
          return docs
+
+    def set_child_document(self,child_doc:list[Document]) :
+        self.child_documents = child_doc
+
