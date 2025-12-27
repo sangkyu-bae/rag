@@ -62,19 +62,23 @@ class DocumentInfo:
 
 
     def get_upsert_document(self)-> list[Document]:
-         docs:list[Document] = [
-             Document(
-                 page_content = doc.content,
-                 matadata = doc.metadata
-             )
-             for doc in self.document
-         ]
+         docs:list[Document] = []
 
-         # docs.append(Document(
-         #     page_content=self.content,
-         #     metadata=self.metadata
-         # ))
-
+         if self.documents:
+             for doc in self.documents:
+                 docs.append(Document(
+                         page_content=doc.content,
+                         matadata=doc.metadata
+                     )
+                 )
+         if self.child_documents:
+             for doc in self.child_documents:
+                 docs.append(
+                     Document(
+                         page_content=doc.content,
+                         metadata=doc.metadata
+                     )
+                 )
          return docs
 
     def set_child_document(self,child_doc:list[Document]) :

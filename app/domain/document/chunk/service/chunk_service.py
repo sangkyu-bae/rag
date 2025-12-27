@@ -7,16 +7,7 @@ class ChunkService:
 
 
     def full_chunk(self,doc:DocumentInfo)-> DocumentInfo:
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1500,
-            chunk_overlap=200,
-            separators=["\n\n", "\n", ".", " ", ""],
-        )
-        splitter_text = splitter.split_text(doc.content)
-
-        doc_list: list[Doc] = [Doc.from_document_pdf(text,doc.metadata) for text in splitter_text]
-
-        return  DocumentInfo.from_doc_info(doc.content,doc.metadata,doc_list)
+        return self.chunk(doc,1500,200)
 
     def chunk(self,doc:DocumentInfo,chunk_size,chunk_overlap) -> DocumentInfo:
         splitter = RecursiveCharacterTextSplitter(
@@ -26,13 +17,14 @@ class ChunkService:
         )
 
         chunks = splitter.split_documents(doc.get_upsert_document())
-        doc_list = []
+        doc_list:list[Doc] = []
         for idx, chunk in enumerate(chunks):
             chunk.metadata["chunk_index"] = idx
             chunk.metadata["role"] = "child"
             doc_list.append(
                 Doc.from_document_pdf(chunk.page_content, chunk.metadata)
             )
+        doc.set_child_document(doc_list)
         return doc
 
 

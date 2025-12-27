@@ -3,7 +3,7 @@ import base64
 import logging
 import json
 import re
-
+from uuid import uuid4
 from sqlalchemy.testing.suite.test_reflection import metadata
 
 from app.domain.document.entity.doc import Doc
@@ -110,9 +110,10 @@ class PdfService:
             full_text += text + "\n"
         return full_text
 
-    def normal_parse(self,pdf_bytes, filetype:str ="pdf") -> DocumentInfo:
+    def normal_parse(self,pdf_bytes, file_name,filetype:str ="pdf") -> DocumentInfo:
         doc = fitz.open(stream=pdf_bytes, filetype=filetype)
 
+        doc_uuid = uuid4()
         result = []
         doc_list: list[Doc] =[]
         content:str = ""
@@ -136,20 +137,33 @@ class PdfService:
             result.append({
                 "page": page_num + 1,
                 "text": text,
-                "images": imgs
+                "images": imgs,
+                "doc_uuid" : file_name+doc_uuid,
+                "file_name" : file_name,
+                "source_type" : filetype,
             })
             content += text + "\n"
 
             metadata = {
-                "page": page_num + 1,
                 "rotation": page.rotation,
                 "rect": list(page.rect),  # 페이지 크기
+
+                "page": page_num + 1,
+                # "text": text,
+                "images": imgs,
+                "doc_uuid": file_name + doc_uuid,
+                "file_name": file_name,
+                "source_type": filetype,
+                "role":"page"
             }
             doc_info: Doc = Doc.from_document_pdf(text,metadata)
             doc_list.append(doc_info)
 
         meta:dict =  {
-            "pages_count" : len(doc)
+            "pages_count" : len(doc),
+            "file_name": file_name,
+            "source_type": filetype,
+            "doc_uuid": file_name + doc_uuid,
         }
         doc_info : DocumentInfo = DocumentInfo.from_doc_info(content,meta,doc_list)
 
