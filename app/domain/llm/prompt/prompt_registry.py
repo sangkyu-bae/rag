@@ -1,5 +1,7 @@
 from app.domain.llm.prompt.prompt_type import PromptType
 from typing import Dict
+import json
+from langchain_core.output_parsers import JsonOutputParser
 
 class PromptRegistry:
     """
@@ -134,6 +136,54 @@ class PromptRegistry:
             Extract metadata fields such as title, date, category, responsible department...
             Return in JSON format.
         """
+
+    @staticmethod
+    def basic_prompt(x:dict[str,any])->dict[str,str]:
+        parser = JsonOutputParser()
+        """
+          x = {
+            "question": str,
+            "tool_outputs": list[dict]
+          }
+          """
+        payload = {
+            "assistant_task": {
+                "instruction": {
+                    "role": (
+                        "당신은 회사 내부 문서, 정형 데이터, SQL 결과, 웹 검색 결과를 종합하여 "
+                        "정확하고 근거 기반의 답변을 생성하는 AI Assistant 입니다."
+                    ),
+                    "rules": [
+                        "반드시 제공된 정보(tool_outputs) 안에서만 답변할 것",
+                        "문서 조각은 반드시 [출처: 파일명, 페이지] 형태로 표기할 것",
+                        "tool_outputs 외의 새로운 사실은 생성하지 말 것",
+                        "여러 근거가 있을 경우 중요도 순서대로 정리",
+                        "정보가 부족하면 \"해당 문서에는 정보가 없음\"으로 답변"
+                    ],
+                },
+                "user_query": x["question"],
+                "tool_outputs": x["tool_outputs"],
+                "output_format": {
+                    "type": "json",
+                    "schema": {
+                        "answer": [
+                            {
+                                "text": "string",
+                                "source": {
+                                    "file_name": "string",
+                                    "page": "number"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+        return {
+            "payload_json": json.dumps(payload, ensure_ascii=False),
+            "format_instructions": parser.get_format_instructions()
+        }
 
 
 # 초기화 호출

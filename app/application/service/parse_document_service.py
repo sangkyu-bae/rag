@@ -177,7 +177,8 @@ class ParseDocumentService:
                 "upsert_document": Upsert(OpenAIEmbed,QdrantLangchainRepository)
                                         .upsert(
                                                 x["result"].get_upsert_document(),
-                                                x["classification"].document_type,
+                                                # x["classification"].document_type,
+                                                "test",
                                         )
             }
         )

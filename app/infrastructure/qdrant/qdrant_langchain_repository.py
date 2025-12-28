@@ -27,12 +27,6 @@ class QdrantLangchainRepository:
         if self.client.collection_exists(collection):
             self.client.delete_collection(collection)
 
-    def get_documents(self,collection:str,query:str,k:int = 10):
-        vectorstore = self.get_vectorstore(collection)
-        return vectorstore.as_retriever(
-            search_kwargs={"k": k}
-        )
-
     def get_retriever(self, collection: str, k: int = 10):
         vectorstore = self.get_vectorstore(collection)
         return vectorstore.as_retriever(

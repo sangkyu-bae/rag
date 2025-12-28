@@ -7,6 +7,7 @@ from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
 
 from app.application.service.parse_document_service import ParseDocumentService
+from app.application.service.question_service import QuestionService
 from app.service.chunk.parser.text_parseprocessor import TextParseProcessor
 from app.service.pdf_service import PdfService
 from app.service.chunk.chunking_service import ChunkingService
@@ -142,3 +143,7 @@ async def test_pdf(file:UploadFile = File(...)):
     return svc.execute(file_bytes,file.filename)
     # return  text_parser.preprocess_text('# 크크크앱 개발자 매뉴얼\n\n\n\n\n# 1. 안드로이드앱 빌드 및 스토어 등록')
 
+@router.post("/test/question")
+async def test_question(question:str):
+    svc = QuestionService()
+    return svc.execute(question)
