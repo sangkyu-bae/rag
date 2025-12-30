@@ -4,6 +4,7 @@ from langchain_core.runnables import RunnableLambda
 from langchain_experimental.llms.anthropic_functions import prompt
 
 from app.domain.document.question.document_compressor_service import DocumentCompressorService
+from app.domain.llm.embedding.openai_embeding_service import OpenAIEmbed
 from app.domain.llm.prompt.prompt_registry import PromptRegistry
 from app.domain.llm.services.llm_client import LlmClient
 from app.infrastructure.document_compressors.llm_filter import LLMChainFilter
@@ -23,7 +24,7 @@ class QuestionService:
         self.llm = LlmClient(model,temperature,timeout)
         self._chain = self._build_chain()
         self.filter =LLMChainFilter.from_llm(self.llm.llm)
-        self.retriever = QdrantLangchainRepository(model,"test").get_retriever()
+        self.retriever = QdrantLangchainRepository(OpenAIEmbed().embeddings).get_retriever("test")
         self.compression = DocumentCompressorService(self.retriever,self.filter)
 
 
@@ -33,12 +34,23 @@ class QuestionService:
             "question": question,
         })
 
-
+    def normalize_docs(self,docs):
+        return [
+            {
+                "content": d.page_content,
+                "source": {
+                    "file_name": d.metadata.get("file_name"),
+                    "page": d.metadata.get("page"),
+                    "chunk_index": d.metadata.get("chunk_index"),
+                }
+            }
+            for d in docs
+        ]
     def _build_chain(self):
         compress_doc = RunnableLambda(
             lambda x:{
                 **x,
-                "tool_outputs" : self.compression.get_compressed_documents(x["question"])
+                "tool_outputs" : self.normalize_docs(self.compression.invoke(x["question"]))
             }
         )
 

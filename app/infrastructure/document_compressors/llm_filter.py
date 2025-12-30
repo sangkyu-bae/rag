@@ -67,7 +67,7 @@ class LLMChainFilter(BaseDocumentCompressor):
             llm,
             prompt: Optional[BasePromptTemplate] = None,
             **kwargs: Any,
-    ) -> LLMChainFilter:
+    ) -> "LLMChainFilter":
         """언어 모델로부터 LLMChainFilter를 생성합니다."""
         if prompt is None:
             prompt_template = """Given the following question and context, return YES if the context is relevant to the question and NO if it isn't.

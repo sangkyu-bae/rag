@@ -7,6 +7,12 @@ class Upsert():
         self.embed_model = embed_model
         self.embed_repository = embed_repository(self.embed_model)
 
-    def upsert(self,collection:str, docs :list[Document]):
+    # def upsert(self,collection:str, docs :list[Document]):
+    #     vector_stores = self.embed_repository.get_vectorstore(collection)
+    #     vector_stores.add_documents(docs)
+
+    def upsert(self,docs:list[Document],collection:str = "document"):
         vector_stores = self.embed_repository.get_vectorstore(collection)
         vector_stores.add_documents(docs)
+
+

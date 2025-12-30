@@ -4,11 +4,12 @@ from importlib.metadata import metadata
 from typing import Any
 
 from pymupdf.extra import make_table_dict
-
+import logging
 from app.domain.document.entity.doc import Doc
 from app.domain.document.entity.document_type import DocumentType
 from app.domain.llm.prompt.prompt_registry import PromptRegistry
 from langchain_core.documents import Document
+logger = logging.getLogger(__name__)
 
 @dataclass
 class DocumentInfo:
@@ -19,7 +20,7 @@ class DocumentInfo:
 
     @classmethod
     def from_doc_info(cls, content:str, metadata:dict[str,Any],documents:list[Doc]) -> DocumentInfo:
-        return cls(content=content,metadata=metadata,documents=documents)
+        return cls(content=content,metadata=metadata,documents=documents,child_documents=[])
 
     def get_route_doc(self) -> str:
         """
@@ -66,9 +67,10 @@ class DocumentInfo:
 
          if self.documents:
              for doc in self.documents:
-                 docs.append(Document(
+                 docs.append(
+                     Document(
                          page_content=doc.content,
-                         matadata=doc.metadata
+                         metadata=doc.metadata
                      )
                  )
          if self.child_documents:

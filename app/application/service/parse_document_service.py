@@ -106,10 +106,16 @@ class ParseDocumentService:
 
     def execute(self, file_bytes: bytes, filename: str):
         langsmith("parse")
-        return self._chain.invoke({
+        result = self._chain.invoke({
             "file_bytes": file_bytes,
             "filename": filename
         })
+
+        return "ok"
+        # return self._chain.invoke({
+        #     "file_bytes": file_bytes,
+        #     "filename": filename
+        # })
 
     # =================================================
     # LCEL 파이프라인은 private
@@ -174,7 +180,7 @@ class ParseDocumentService:
         upsert = RunnableLambda(
             lambda x:{
                 **x,
-                "upsert_document": Upsert(OpenAIEmbed,QdrantLangchainRepository)
+                "upsert_document": Upsert(OpenAIEmbed().embeddings,QdrantLangchainRepository)
                                         .upsert(
                                                 x["result"].get_upsert_document(),
                                                 # x["classification"].document_type,

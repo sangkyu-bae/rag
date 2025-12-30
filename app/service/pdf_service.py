@@ -138,7 +138,7 @@ class PdfService:
                 "page": page_num + 1,
                 "text": text,
                 "images": imgs,
-                "doc_uuid" : file_name+doc_uuid,
+                "doc_uuid": f"{file_name}_{doc_uuid}",
                 "file_name" : file_name,
                 "source_type" : filetype,
             })
@@ -151,7 +151,7 @@ class PdfService:
                 "page": page_num + 1,
                 # "text": text,
                 "images": imgs,
-                "doc_uuid": file_name + doc_uuid,
+                "doc_uuid": f"{file_name}_{doc_uuid}",
                 "file_name": file_name,
                 "source_type": filetype,
                 "role":"page"
@@ -163,7 +163,7 @@ class PdfService:
             "pages_count" : len(doc),
             "file_name": file_name,
             "source_type": filetype,
-            "doc_uuid": file_name + doc_uuid,
+            "doc_uuid": f"{file_name}_{doc_uuid}"
         }
         doc_info : DocumentInfo = DocumentInfo.from_doc_info(content,meta,doc_list)
 
