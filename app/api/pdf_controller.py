@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, UploadFile, File, Request, HTTPException
 import fitz
 import base64
@@ -5,9 +7,15 @@ import logging
 from dotenv import load_dotenv
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
+from platformdirs.version import version_tuple
 
 from app.application.service.parse_document_service import ParseDocumentService
 from app.application.service.question_service import QuestionService
+from app.domain.llm.embedding.openai_embeding_service import OpenAIEmbed
+from app.domain.llm.services.llm_client import LlmClient
+from app.infrastructure.vector_store.vector_db import VectorDB
+from app.infrastructure.vector_store.vector_factory import VectorFactory, VectorType
+from app.infrastructure.vector_store.vector_filter import VectorFilter
 from app.service.chunk.parser.text_parseprocessor import TextParseProcessor
 from app.service.pdf_service import PdfService
 from app.service.chunk.chunking_service import ChunkingService
@@ -145,5 +153,14 @@ async def test_pdf(file:UploadFile = File(...)):
 
 @router.post("/test/question")
 async def test_question(question:str):
-    svc = QuestionService()
+    vector_db:VectorDB = VectorFactory.get_vectorstore(VectorType.QDRANT,OpenAIEmbed().embeddings)
+    vector_filter_list:List[VectorFilter] = []
+    vector_filter_list.append(
+        VectorFilter.match("metadata.role","page")
+    )
+    svc = QuestionService(
+        collection="test",
+        vector_db=vector_db,
+        vector_filters=vector_filter_list,
+    )
     return svc.execute(question)
