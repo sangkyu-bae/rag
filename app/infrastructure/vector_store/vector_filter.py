@@ -44,7 +44,7 @@ class VectorFilter:
         if self.filter_type == "match":
             return {
                 "key": self.key,
-                "match_text": {"text": self.value}
+                "match_text": self.value
             }
 
         if self.filter_type == "range":

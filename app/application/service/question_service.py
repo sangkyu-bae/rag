@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from langchain_core.runnables import RunnableLambda
 from langchain_experimental.llms.anthropic_functions import prompt
@@ -12,19 +13,26 @@ from app.infrastructure.langchain.langsmith import langsmith
 from app.infrastructure.qdrant.qdrant_langchain_repository import QdrantLangchainRepository
 from langchain_core.prompts import ChatPromptTemplate
 
+from app.infrastructure.vector_store.vector_db import VectorDB
+from app.infrastructure.vector_store.vector_filter import VectorFilter
+
 logger = logging.getLogger(__name__)
 
 class QuestionService:
     def __init__(
             self,
+            collection: str,
             model:str ="gpt-4o-mini",
             temperature: float = 0.2,
             timeout: int = 30,
+            vector_db: VectorDB = None,
+            vector_filters:List[VectorFilter] = None,
     ):
         self.llm = LlmClient(model,temperature,timeout)
         self._chain = self._build_chain()
         self.filter =LLMChainFilter.from_llm(self.llm.llm)
-        self.retriever = QdrantLangchainRepository(OpenAIEmbed().embeddings).get_retriever("test")
+        # self.retriever = QdrantLangchainRepository(OpenAIEmbed().embeddings).get_retriever("test")
+        self.retriever:VectorDB = vector_db.get_retriever(collection,vector_filters)
         self.compression = DocumentCompressorService(self.retriever,self.filter)
 
 

@@ -156,7 +156,7 @@ async def test_question(question:str):
     vector_db:VectorDB = VectorFactory.get_vectorstore(VectorType.QDRANT,OpenAIEmbed().embeddings)
     vector_filter_list:List[VectorFilter] = []
     vector_filter_list.append(
-        VectorFilter.match("metadata.role","page")
+        VectorFilter.match("metadata.role","child")
     )
     svc = QuestionService(
         collection="test",
