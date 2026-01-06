@@ -5,13 +5,16 @@ from langchain_core.runnables import RunnableLambda
 from langchain_experimental.llms.anthropic_functions import prompt
 
 from app.domain.document.question.document_compressor_service import DocumentCompressorService
+from app.domain.document.question.multi_turn_service import MultiTurnService
 from app.domain.llm.embedding.openai_embeding_service import OpenAIEmbed
 from app.domain.llm.prompt.prompt_registry import PromptRegistry
 from app.domain.llm.services.llm_client import LlmClient
+from app.infrastructure.conversation.dto.conversation_dto import ConversationDTO
+from app.infrastructure.conversation.repository.conversation_repository import ConversationRepository
 from app.infrastructure.document_compressors.llm_filter import LLMChainFilter
 from app.infrastructure.langchain.langsmith import langsmith
 from app.infrastructure.qdrant.qdrant_langchain_repository import QdrantLangchainRepository
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from app.infrastructure.vector_store.vector_db import VectorDB
 from app.infrastructure.vector_store.vector_filter import VectorFilter
@@ -22,6 +25,7 @@ class QuestionService:
     def __init__(
             self,
             collection: str,
+            conversation_repository: ConversationRepository,
             model:str ="gpt-4o-mini",
             temperature: float = 0.2,
             timeout: int = 30,
@@ -34,12 +38,15 @@ class QuestionService:
         # self.retriever = QdrantLangchainRepository(OpenAIEmbed().embeddings).get_retriever("test")
         self.retriever:VectorDB = vector_db.get_retriever(collection,vector_filters)
         self.compression = DocumentCompressorService(self.retriever,self.filter)
+        self.multi_turn_service = MultiTurnService(conversation_repository)
 
 
-    def execute(self, question:str):
+    def execute(self, request_question:ConversationDTO):
         langsmith("question")
+        chat_history = self.multi_turn_service.to_messages(request_question.session_id,6)
         return self._chain.invoke({
-            "question": question,
+            "question": request_question.content,
+            "chat_history": chat_history,
         })
 
     def normalize_docs(self,docs):
@@ -69,6 +76,7 @@ class QuestionService:
                 "출력은 반드시 JSON만 사용한다. "
                 "payload_json을 읽고 규칙을 엄격히 준수하라."
             ),
+            MessagesPlaceholder(variable_name="chat_history"),
             (
                 "human",
                 """

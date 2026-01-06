@@ -8,6 +8,9 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from kiwipiepy import Kiwi
 
+from app.db.database import engine, Base
+
+
 def create_application() -> FastAPI:
     """Create and configure the FastAPI application instance."""
     application = FastAPI(
@@ -37,3 +40,7 @@ app = create_application()
 async def startup_event():
     logger.info("Starting up...")
     app.state.kiwi = Kiwi()  # 앱 상태에 저장
+@app.on_event("startup")
+async def on_startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

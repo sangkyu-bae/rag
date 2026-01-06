@@ -3,7 +3,7 @@ from sqlalchemy.sql import func
 from app.db.database import Base
 
 class ConversationSummary(Base):
-    __tablename__ = "conversation_summaries"
+    __tablename__ = "conversation_summary"
 
     id = Column(Integer, primary_key=True)
     session_id = Column(String(100), unique=True, index=True)

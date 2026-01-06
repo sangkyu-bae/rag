@@ -17,21 +17,11 @@ class ConversationSummaryRepository:
         await self.db.commit()
         return conv
 
-    async def update(self, session_id: str, summary: str, last_message_id: int) -> ConversationSummary:
-        conv = ConversationSummary(
-            session_id = session_id,
-            summary = summary,
-            last_message_id = last_message_id
-        )
-        self.db.(conv)
-        await self.db.commit()
-        return conv
-
     async def find_by_session(self, session_id: str) -> list[ConversationSummary]:
         stmt = (
             select(ConversationSummary)
             .where(ConversationSummary.session_id == session_id)
-            .order_by(ConversationSummary.created_at)
+            # .order_by(ConversationSummary.created_at)
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
