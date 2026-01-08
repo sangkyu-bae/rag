@@ -16,6 +16,8 @@ from app.infrastructure.langchain.langsmith import langsmith
 from app.infrastructure.qdrant.qdrant_langchain_repository import QdrantLangchainRepository
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
+from app.infrastructure.tool.tool_executor import ToolExecutor
+from app.infrastructure.tool.vector_db_tool import VectorDBTool
 from app.infrastructure.vector_store.vector_db import VectorDB
 from app.infrastructure.vector_store.vector_filter import VectorFilter
 
@@ -36,18 +38,48 @@ class QuestionService:
         self._chain = self._build_chain()
         self.filter =LLMChainFilter.from_llm(self.llm.llm)
         # self.retriever = QdrantLangchainRepository(OpenAIEmbed().embeddings).get_retriever("test")
-        self.retriever:VectorDB = vector_db.get_retriever(collection,vector_filters)
+        self.retriever = vector_db.get_retriever(collection,vector_filters)
         self.compression = DocumentCompressorService(self.retriever,self.filter)
         self.multi_turn_service = MultiTurnService(conversation_repository)
 
 
     def execute(self, request_question:ConversationDTO):
         langsmith("question")
-        chat_history = self.multi_turn_service.to_messages(request_question.session_id,6)
-        return self._chain.invoke({
-            "question": request_question.content,
-            "chat_history": chat_history,
-        })
+        try:
+            # chat_history = self.multi_turn_service.to_messages(
+            #     request_question.session_id, 6
+            # )
+
+            response = self._chain.invoke({
+                "question": request_question.content,
+                # "chat_history": chat_history,
+            })
+
+            # 성공한 경우만 저장
+            # self.multi_turn_service.save_turn(
+            #     session_id=request_question.session_id,
+            #     question=request_question.content,
+            #     answer=response
+            # )
+
+            return response
+
+        except Exception as e:
+            logger.exception(
+                "LLM chain execution failed",
+                extra={
+                    "session_id": request_question.session_id,
+                    "question": request_question.content,
+                }
+            )
+            self.multi_turn_service.save_failed_turn(
+                session_id=request_question.session_id,
+                question=request_question.content,
+                error=str(e)
+            )
+
+            raise
+
 
     def normalize_docs(self,docs):
         return [
@@ -62,10 +94,18 @@ class QuestionService:
             for d in docs
         ]
     def _build_chain(self):
+        # compress_doc = RunnableLambda(
+        #     lambda x:{
+        #         **x,
+        #         "tool_outputs" : self.normalize_docs(self.compression.invoke(x["question"]))
+        #     }
+        # )
+        tool :ToolExecutor = VectorDBTool
         compress_doc = RunnableLambda(
-            lambda x:{
+            lambda x: {
                 **x,
-                "tool_outputs" : self.normalize_docs(self.compression.invoke(x["question"]))
+                # "tool_outputs": self.normalize_docs(self.compression.invoke(x["question"]))
+                "tool_outputs": self.normalize_docs(tool._execute(x["question"]))
             }
         )
 
@@ -76,7 +116,7 @@ class QuestionService:
                 "출력은 반드시 JSON만 사용한다. "
                 "payload_json을 읽고 규칙을 엄격히 준수하라."
             ),
-            MessagesPlaceholder(variable_name="chat_history"),
+            # MessagesPlaceholder(variable_name="chat_history"),
             (
                 "human",
                 """
