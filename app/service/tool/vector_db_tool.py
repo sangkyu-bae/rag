@@ -1,10 +1,9 @@
-from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 
 from app.domain.document.question.document_compressor_service import DocumentCompressorService
 from app.domain.llm.embedding.openai_embeding_service import OpenAIEmbed
 from app.infrastructure.document_compressors.llm_filter import LLMChainFilter
-from app.infrastructure.tool.tool_executor import ToolExecutor
+from app.service.tool.tool_executor import ToolExecutor
 from app.infrastructure.vector_store.vector_db import VectorDB
 from app.infrastructure.vector_store.vector_factory import VectorFactory, VectorType
 from typing import List
