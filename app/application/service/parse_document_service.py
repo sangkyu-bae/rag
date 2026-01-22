@@ -76,7 +76,7 @@ from langchain_core.runnables import RunnableLambda
 
 from app.infrastructure.langchain.langsmith import langsmith
 from app.infrastructure.langchain.upsert import Upsert
-from app.infrastructure.qdrant.qdrant_langchain_repository import QdrantLangchainRepository
+from app.infrastructure.vector_store.qdrant import QdrantLangchainRepository
 from app.service.pdf_service import PdfService
 from app.domain.llm.services.llm_client import LlmClient
 from app.domain.llm.prompt.prompt_registry import PromptRegistry
@@ -85,12 +85,8 @@ from app.domain.document.entity.document_type import DocumentType
 from app.domain.document.chunk.service.chunk_service import ChunkService
 from app.domain.document.services.llm_parse_service import LlamaParseService
 from app.domain.llm.embedding.openai_embeding_service import OpenAIEmbed
-from app.infrastructure.qdrant.qdrant_repository import QdrantRepository
 
 import json
-
-from langchain.agents import create_agent
-
 
 logger = logging.getLogger(__name__)
 

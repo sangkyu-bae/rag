@@ -35,16 +35,17 @@
 from qdrant_client.http.models import Filter, FieldCondition, MatchValue,Range
 from qdrant_client.models import VectorParams, Distance
 from langchain_qdrant import Qdrant
-from app.infrastructure.qdrant.qdrant_client_factory import QdrantClientFactory
+
+from app.application.processing.vector.vector_port import VectorDataBase
+from app.infrastructure.vector_store.qdrant.qdrant_client_factory import QdrantClientFactory
 from langchain_core.embeddings import Embeddings
 from qdrant_client import QdrantClient
 
 from app.infrastructure.vector_store.vector_filter import VectorFilter
 
-from app.infrastructure.vector_store.vector_db import VectorDB
 
-
-class QdrantLangchainRepository(VectorDB):
+# class QdrantLangchainRepository(VectorDB):
+class QdrantLangchainRepository(VectorDataBase):
     """
     LangChain 기반 Qdrant Repository
     - 컬렉션 관리
@@ -102,9 +103,7 @@ class QdrantLangchainRepository(VectorDB):
 
 
         vectorstore = self.get_vectorstore(collection)
-        print("hh")
-        print(search_kwargs)
-        print(collection)
+
         return vectorstore.as_retriever(search_kwargs=search_kwargs)
 
     def filter_adapter(self,vector_filter:VectorFilter):

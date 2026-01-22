@@ -4,7 +4,7 @@ from qdrant_client.models import (
     VectorParams,
     PointStruct
 )
-from app.infrastructure.qdrant.qdrant_client_factory import QdrantClientFactory
+from app.infrastructure.vector_store.qdrant.qdrant_client_factory import QdrantClientFactory
 
 
 class QdrantRepository:

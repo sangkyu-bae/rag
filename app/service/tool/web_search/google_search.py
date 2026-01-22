@@ -81,12 +81,12 @@ class GoogleNews:
         """
         키워드로 뉴스를 검색합니다.
 
-        Args:
             keyword (Optional[str]): 검색할 키워드 (기본값: None)
             k (int): 검색할 뉴스의 최대 개수 (기본값: 3)
 
         Returns:
             List[Dict[str, str]]: URL과 내용을 포함한 딕셔너리 리스트
+        Args:
         """
         if keyword:
             encoded_keyword = quote(keyword)
