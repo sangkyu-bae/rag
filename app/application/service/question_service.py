@@ -2,22 +2,19 @@ import logging
 from typing import List
 
 from langchain_core.runnables import RunnableLambda
-from langchain_experimental.llms.anthropic_functions import prompt
 
 from app.domain.document.question.document_compressor_service import DocumentCompressorService
 from app.domain.document.question.multi_turn_service import MultiTurnService
-from app.domain.llm.embedding.openai_embeding_service import OpenAIEmbed
 from app.domain.llm.prompt.prompt_registry import PromptRegistry
 from app.domain.llm.services.llm_client import LlmClient
 from app.infrastructure.conversation.dto.conversation_dto import ConversationDTO
 from app.infrastructure.conversation.repository.conversation_repository import ConversationRepository
 from app.infrastructure.document_compressors.llm_filter import LLMChainFilter
 from app.infrastructure.langchain.langsmith import langsmith
-from app.infrastructure.qdrant.qdrant_langchain_repository import QdrantLangchainRepository
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate
 
-from app.infrastructure.tool.tool_executor import ToolExecutor
-from app.infrastructure.tool.vector_db_tool import VectorDBTool
+from app.service.tool.tool_executor import ToolExecutor
+from app.service.tool.vector_db_tool import VectorDBTool
 from app.infrastructure.vector_store.vector_db import VectorDB
 from app.infrastructure.vector_store.vector_filter import VectorFilter
 
@@ -72,11 +69,11 @@ class QuestionService:
                     "question": request_question.content,
                 }
             )
-            self.multi_turn_service.save_failed_turn(
-                session_id=request_question.session_id,
-                question=request_question.content,
-                error=str(e)
-            )
+            # self.multi_turn_service.save_failed_turn(
+            #     session_id=request_question.session_id,
+            #     question=request_question.content,
+            #     error=str(e)
+            # )
 
             raise
 
@@ -94,18 +91,11 @@ class QuestionService:
             for d in docs
         ]
     def _build_chain(self):
-        # compress_doc = RunnableLambda(
-        #     lambda x:{
-        #         **x,
-        #         "tool_outputs" : self.normalize_docs(self.compression.invoke(x["question"]))
-        #     }
-        # )
-        tool :ToolExecutor = VectorDBTool
+        tool :ToolExecutor = VectorDBTool(collection="test")
         compress_doc = RunnableLambda(
             lambda x: {
                 **x,
-                # "tool_outputs": self.normalize_docs(self.compression.invoke(x["question"]))
-                "tool_outputs": self.normalize_docs(tool._execute(x["question"]))
+                "tool_outputs": self.normalize_docs(tool.execute(x["question"]))
             }
         )
 

@@ -1,18 +1,28 @@
 from typing import List
 
-from fastapi import APIRouter, UploadFile, File, Request, HTTPException
+from fastapi import APIRouter, UploadFile, File, Request, HTTPException, Depends
 import fitz
 import base64
 import logging
 from dotenv import load_dotenv
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
 from platformdirs.version import version_tuple
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.testing.suite.test_reflection import users
 
-from app.application.service.parse_document_service import ParseDocumentService
+from app.api.deps import get_conversation_repository
+# from app.application.service.parse_document_service import ParseDocumentService
 from app.application.service.question_service import QuestionService
+from app.db.deps import get_db
 from app.domain.llm.embedding.openai_embeding_service import OpenAIEmbed
+from app.domain.llm.prompt.prompt_registry import PromptRegistry
 from app.domain.llm.services.llm_client import LlmClient
+from app.infrastructure.conversation.dto.conversation_dto import ConversationDTO
+from app.infrastructure.conversation.repository.conversation_repository import ConversationRepository
+from app.infrastructure.langchain.langsmith import langsmith
+from app.infrastructure.route.question_router_filter import QuestionRouterFilter
 from app.infrastructure.vector_store.vector_db import VectorDB
 from app.infrastructure.vector_store.vector_factory import VectorFactory, VectorType
 from app.infrastructure.vector_store.vector_filter import VectorFilter
@@ -22,6 +32,7 @@ from app.service.chunk.chunking_service import ChunkingService
 from app.service.chunk.nlp.nlp_service import NLPService
 # from app.services.chunk.chunking_service import ChunkingService
 from app.domain.document.services.llm_parse_service import LlamaParseService
+from app.db.database import AsyncSessionLocal
 load_dotenv()
 logger = logging.getLogger(__name__)
 
@@ -142,17 +153,20 @@ async def parse_pdf(file: UploadFile = File(...)):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Parsing failed: {str(e)}")
-
-@router.post("/test/pd")
-async def test_pdf(file:UploadFile = File(...)):
-    file_bytes = await file.read()
-    svc = ParseDocumentService()
-
-    return svc.execute(file_bytes,file.filename)
+#
+# @router.post("/test/pd")
+# async def test_pdf(file:UploadFile = File(...)):
+#     file_bytes = await file.read()
+#     svc = ParseDocumentService()
+#
+#     return svc.execute(file_bytes,file.filename)
     # return  text_parser.preprocess_text('# 크크크앱 개발자 매뉴얼\n\n\n\n\n# 1. 안드로이드앱 빌드 및 스토어 등록')
 
 @router.post("/test/question")
-async def test_question(question:str):
+async def test_question(question:str,
+                        conversation_req: ConversationDTO,
+                        # user_id:str,session_id:str,
+                        conversation_repository: ConversationRepository = Depends(get_conversation_repository)):
     vector_db:VectorDB = VectorFactory.get_vectorstore(VectorType.QDRANT,OpenAIEmbed().embeddings)
     vector_filter_list:List[VectorFilter] = []
     vector_filter_list.append(
@@ -162,5 +176,29 @@ async def test_question(question:str):
         collection="test",
         vector_db=vector_db,
         vector_filters=vector_filter_list,
+        conversation_repository=conversation_repository
     )
-    return svc.execute(question)
+    return svc.execute(conversation_req)
+@router.post("/test/db/insert")
+async def test_db_insert(
+        conversation_req:ConversationDTO,
+        conversation_repository: ConversationRepository = Depends(get_conversation_repository)
+):
+    await conversation_repository.save(
+        session_id=conversation_req.session_id,
+        role=conversation_req.role,
+        content=conversation_req.content,
+        user_id=conversation_req.user_id
+    )
+    return "ok"
+
+@router.post("/test/router")
+async def test_router(
+    question:str
+):
+    question_filter = QuestionRouterFilter.form_question_router_llm(
+        llm=LlmClient(model="gpt-4o-mini", temperature=0.2, timeout=30).llm,
+    )
+    return question_filter.execute(question)
+
+
