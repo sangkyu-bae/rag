@@ -1,5 +1,6 @@
 from langchain_openai import ChatOpenAI
-from llama_index.core import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
+
 from pydantic import BaseModel, Field
 
 
