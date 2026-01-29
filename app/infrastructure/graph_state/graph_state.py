@@ -14,3 +14,5 @@ class GraphState(TypedDict):
     question: Annotated[str, "User question"]
     generation: Annotated[str, "LLM generated answer"]
     documents: Annotated[List[str], "List of documents"]
+    tool_outputs:Annotated[any,"tool outputs"]
+    final_answer: Annotated[str,"answer"]
