@@ -1,6 +1,7 @@
 
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import create_react_agent
@@ -34,25 +35,42 @@ class ResearchWorkFlow:
         vector_tool: ToolExecutor = VectorDBTool(collection="test")
         vector = VectorSearch(vector_db=vector_tool)
 
-        llm = ChatOpenAI(model="gpt-4o-mini")
+        # llm = ChatOpenAI(model="gpt-4o-mini")
+        llm = ChatOpenAI(model="gpt-4o")
         agent_factory = AgentFactory(llm)
 
-        search_agent  = create_react_agent(llm,tools=[tavily_tool,vector]
-                                         )
-        search_node = agent_factory.create_agent_node(agent =search_agent,name="Searcher")
+        web_search_agent  = create_react_agent(llm,tools=[tavily_tool])
+        web_search_node = agent_factory.create_agent_node(agent =web_search_agent,name="WebSearcher")
+
+        vector_search_agent = create_react_agent(llm,tools=[vector])
+        vector_search_node = agent_factory.create_agent_node(agent =vector_search_agent,name="VectorSearcher")
 
         supervisor_agent = create_team_supervisor(
             llm,
             "You are a supervisor tasked with managing a conversation between the"
-            " following workers: Search. Given the following user request,"
+            " following workers: WebSearcher,VectorSearcher. Given the following user request,"
             " respond with the worker to act next. Each worker will perform a"
             " task and respond with their results and status. When finished,"
+            """
+                Routing Rules:
+                
+                - If the question refers to internal systems, internal apps, deployment guides,
+                  technical documents, financial reports, or any company-specific information,
+                  ALWAYS choose VectorSearcher. ex:)크크크앱
+                
+                - Use WebSearcher only for:
+                  - public news
+                  - market information
+                  - external events
+                  - general knowledge not related to internal systems
+            """
             " respond with FINISH.",
-            ["Searcher"],
+            ["WebSearcher","VectorSearcher"],
         )
 
         research_graph = StateGraph(ResearchState)
-        research_graph.add_node("Searcher", search_node)
+        research_graph.add_node("WebSearcher", web_search_node)
+        research_graph.add_node("VectorSearcher", vector_search_node)
         research_graph.add_node("Supervisor", supervisor_agent)
 
         research_graph.add_edge("Searcher", "Supervisor")
@@ -64,7 +82,7 @@ class ResearchWorkFlow:
         )
 
         research_graph.set_entry_point("Supervisor")
-        app = research_graph.compile()  # 🔥 이거 필수
+        app = research_graph.compile(checkpointer=MemorySaver())  # 🔥 이거 필수
         output = run_graph(app,query)
 
         print(output["messages"][-1].content)
