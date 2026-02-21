@@ -73,19 +73,28 @@ class ResearchWorkFlow:
         research_graph.add_node("VectorSearcher", vector_search_node)
         research_graph.add_node("Supervisor", supervisor_agent)
 
-        research_graph.add_edge("Searcher", "Supervisor")
+        research_graph.add_edge("WebSearcher", "Supervisor")
+        research_graph.add_edge("VectorSearcher", "Supervisor")
 
         research_graph.add_conditional_edges(
             "Supervisor",
             get_next_node,
-            {"Searcher": "Searcher", "FINISH": END},
+            {
+                "WebSearcher": "WebSearcher",
+                "VectorSearcher":"VectorSearcher",
+                 "FINISH": END
+            },
         )
 
         research_graph.set_entry_point("Supervisor")
         app = research_graph.compile(checkpointer=MemorySaver())  # 🔥 이거 필수
-        output = run_graph(app,query)
 
-        print(output["messages"][-1].content)
+        # output = run_graph(app,query)
+        #
+        # print(output["messages"][-1].content)
+
+        return app
+
 
         # RESEARCH_AGENT["tools"] = [tavily_tool, vector]
 

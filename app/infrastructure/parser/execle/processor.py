@@ -1,24 +1,41 @@
 from fastapi import UploadFile
+from langchain_anthropic import ChatAnthropic
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain_experimental.tools import PythonAstREPLTool
 # from langchain.agents.agent_types import AgentType
 from langchain_openai import ChatOpenAI
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+
 
 from app.infrastructure.parser.execle.code import observation_callback, create_tool_callback, result_callback
 from app.infrastructure.parser.execle.message import AgentStreamParser, AgentCallbacks
 
-# from langchain_teddynote.messages import AgentStreamParser, AgentCallbacks
 def ask(file:UploadFile,query:str):
 
     df = pd.read_excel(
             file.file
     )
+    import matplotlib.pyplot as plt
+    import matplotlib.font_manager as fm
+
+    font_path = "C:/Windows/Fonts/malgun.ttf"
+    font_prop = fm.FontProperties(fname=font_path)
+
+    plt.rcParams["font.family"] = font_prop.get_name()
+    plt.rcParams["axes.unicode_minus"] = False
+
     python_tool = PythonAstREPLTool()
     python_tool.locals["df"] = df
 
+
+    python_tool.locals["plt"] = plt
+    python_tool.locals["matplotlib"] = matplotlib
+
     agent = create_pandas_dataframe_agent(
-        ChatOpenAI(model="gpt-4o", temperature=0),
+        # ChatOpenAI(model="gpt-4o", temperature=0),
+        ChatAnthropic(model="claude-opus-4-5-20251101",temperature=0),
         df,
         verbose=False,
         agent_type="tool-calling",
@@ -40,3 +57,5 @@ def ask(file:UploadFile,query:str):
 
     for step in response:
         stream_parser.process_agent_steps(step)
+
+    return stream_parser.output

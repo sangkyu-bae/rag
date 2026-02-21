@@ -1,3 +1,5 @@
+from typing import Any
+
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
@@ -9,31 +11,47 @@ class VectorSearchInput(BaseModel):
 
 class VectorSearch(BaseTool):
     name:str = "qdrant_vector_search"
-    description:str = (
-        """Search documents in a collection using semantic, keyword, or hybrid search.
-    
-         This function is used to find relevant documents within a specific collection based on a search query.
-         It supports multiple search types to provide flexible document retrieval capabilities.
-         The function returns structured search results with document content, metadata, relevance scores, and document IDs.
-    
-         Args:
-             collection_id: The unique identifier of the collection to search in. This should be obtained
-                           from the list_collections() function or provided by the user.
-             query: The search query string to find relevant documents. This can be a natural language
-                    question, keywords, or any text that describes what you're looking for.
-             limit: Maximum number of documents to return. Default is 5, maximum allowed is 100.
-                    Higher limits provide more results but may take longer to process.
-             search_type: Type of search algorithm to perform. Options include:
-                         - "semantic": Uses vector similarity search (recommended for natural language queries)
-                         - "keyword": Uses traditional text matching (good for exact terms)
-                         - "hybrid": Combines both semantic and keyword search (best overall results)
-             filter_json: Optional JSON string containing metadata filters to narrow down the search scope.
-                         Example: '{"source": "sample.pdf", "category": "technical"}'
-                         This helps focus the search on specific document types or sources.
-         """
-    )
+    # description:str = (
+    #     """Search documents in a collection using semantic, keyword, or hybrid search.
+    #
+    #      This function is used to find relevant documents within a specific collection based on a search query.
+    #      It supports multiple search types to provide flexible document retrieval capabilities.
+    #      The function returns structured search results with document content, metadata, relevance scores, and document IDs.
+    #
+    #      Args:
+    #          collection_id: The unique identifier of the collection to search in. This should be obtained
+    #                        from the list_collections() function or provided by the user.
+    #          query: The search query string to find relevant documents. This can be a natural language
+    #                 question, keywords, or any text that describes what you're looking for.
+    #          limit: Maximum number of documents to return. Default is 5, maximum allowed is 100.
+    #                 Higher limits provide more results but may take longer to process.
+    #          search_type: Type of search algorithm to perform. Options include:
+    #                      - "semantic": Uses vector similarity search (recommended for natural language queries)
+    #                      - "keyword": Uses traditional text matching (good for exact terms)
+    #                      - "hybrid": Combines both semantic and keyword search (best overall results)
+    #          filter_json: Optional JSON string containing metadata filters to narrow down the search scope.
+    #                      Example: '{"source": "sample.pdf", "category": "technical"}'
+    #                      This helps focus the search on specific document types or sources.
+    #      """
+    # )
+    description :str ="""
+        Search INTERNAL COMPANY DOCUMENTS.
+
+        Use this tool whenever the question is about:
+        - company systems
+        - internal services
+        - internal app (크크크앱, 관리자, 사내포털 등)
+        - deployment process
+        - architecture
+        - API specs
+        - manuals
+        - 운영 절차
+        
+        This is the PRIMARY knowledge source.
+        Always try this before web search unless the question is about public internet knowledge.
+    """
     args_schema: type[BaseModel] = VectorSearchInput
-    # vector_db : VectorDB = None
+    vector_db: Any = Field(default=None, exclude=True)
 
     def __init(
             self,
@@ -49,7 +67,7 @@ class VectorSearch(BaseTool):
             self,
             query:str
     ) -> list:
-        res = self.vector_db.excute(question=query)
+        res = self.vector_db.execute(question=query)
         return res
 
 

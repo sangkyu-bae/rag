@@ -29,3 +29,6 @@ def create_team_supervisor(model,system_prompt,members) -> str:
     supervisor_chain = prompt | llm.with_structured_output(RouteResponse)
 
     return supervisor_chain
+
+def get_next_node(x):
+    return x["next"]
