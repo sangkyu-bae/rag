@@ -36,7 +36,7 @@ class ResearchWorkFlow:
         vector = VectorSearch(vector_db=vector_tool)
 
         # llm = ChatOpenAI(model="gpt-4o-mini")
-        llm = ChatOpenAI(model="gpt-4o")
+        llm = ChatOpenAI(model="gpt-5o-mini")
         agent_factory = AgentFactory(llm)
 
         web_search_agent  = create_react_agent(llm,tools=[tavily_tool])
@@ -54,15 +54,22 @@ class ResearchWorkFlow:
             """
                 Routing Rules:
                 
-                - If the question refers to internal systems, internal apps, deployment guides,
-                  technical documents, financial reports, or any company-specific information,
-                  ALWAYS choose VectorSearcher. ex:)크크크앱
-                
-                - Use WebSearcher only for:
-                  - public news
-                  - market information
-                  - external events
-                  - general knowledge not related to internal systems
+              1) ALWAYS choose VectorSearcher ONLY if:
+               - The question clearly refers to company-internal systems,
+               - proprietary documents,
+               - internal app names (e.g., 크크크앱),
+               - deployment guides,
+               - internal financial reports.
+            
+            2) ALWAYS choose WebSearcher if the question refers to:
+               - current or recent financial market data (e.g., call rate, interest rates, exchange rate)
+               - macroeconomic indicators
+               - stock prices
+               - economic statistics
+               - public financial metrics
+            
+            3) If the information is time-sensitive (e.g., "전월", "최근", "현재"),
+               ALWAYS prefer WebSearcher.
             """
             " respond with FINISH.",
             ["WebSearcher","VectorSearcher"],

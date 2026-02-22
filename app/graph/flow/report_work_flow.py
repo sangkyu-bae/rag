@@ -6,6 +6,7 @@ from langgraph.graph import StateGraph
 from langgraph.prebuilt import create_react_agent
 
 from app.graph.nodes.report_node import Report
+from app.graph.util.graph import run_graph
 from app.infrastructure.node.agent_factory import AgentFactory
 from app.service.state.research_state import ResearchState
 from app.service.supervisor.team_superviosr import create_team_supervisor, get_next_node
@@ -46,5 +47,6 @@ class ReportWorkFlow:
 
         report_graph.set_entry_point("Supervisor")
         app = report_graph.compile(checkpointer=MemorySaver())
-
+        # run_graph(app)
+        # return app
         return app
